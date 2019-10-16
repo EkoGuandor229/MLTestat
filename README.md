@@ -20,10 +20,13 @@ model quality (R2 values). Again, compare the training MSE to the test MSE.
 Attendance is not required for these two weeks. The lab 6.004 is available to you at the normal hours,
 if you need a computer with Python, Matlab, and RStudio installed, or if you need any help with the
 assignment.
-2. You write a short report which answers the questions below and summarizes your findings. The report
+2. You write a short report which answers the questions above and summarizes your findings. The report
 should be 1 – 2 pages A4 and written in German or English.
 3. The report is due on Friday, 25 October 2019 at 17:00. Please also hand in all code written for this
 assignment. The report in PDF form and all code have to be sent to sjecklin@hsr.ch. Add the subject
 (Betreff) ML-Assignment to the email.
 4. Everybody hands in their own report. Collaboration and discussion between students, however, is
 allowed and encouraged.
+
+## Report
+1. NOPE
