@@ -65,6 +65,32 @@ allowed and encouraged.
 
 # Report
 ## Setup
-First, we prepare the program to read in the training data and the test data.
+First, we prepare the program to read in the training data and the test data. I used panda for this
+and i also imported numpy for later use
+
+```
+import numpy as np
+import pandas as pd
+
+
+def main():
+    training_data_input = "../data/InjectionMolding_Train.csv"
+    test_data_input = "../data/InjectionMolding_Test.csv"
+    training_data = pd.read_csv(training_data_input, usecols=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+    test_data = pd.read_csv(test_data_input, usecols=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+
+if __name__ == '__main__':
+    main()
+```
 
 ## 1. Correlation between variables
+For the correlation between variables, i decided to use the pandas correlation function
+```
+corr = training_data.corr()
+    print(corr)
+    f = plt.figure(figsize=(8, 8))
+    plt.matshow(corr, fignum=f.number)
+    plt.title('Correlation Matrix')
+    plt.show()
+```
