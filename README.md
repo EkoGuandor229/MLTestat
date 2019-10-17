@@ -13,6 +13,12 @@ For a set of produced parts, internal machine measurements and parameters, as we
 the part, have been logged. Your task will be to estimate the mass of a part, given the machine measurements.
 With that, the optimal amount of raw material for new parts can be found. The produced part is an ice
 scraper, as shown in Figure 1.
+![Ice scraper](./media/icescraper.jpg)
+*Figure 1: Ice scraper*
+
+The injection molding machine with its components is shown in figure 2
+![injection molding machine](./media/injectionmoldingmachine.PNG)
+*Figure 2: Injection molding machine*
 
 ## Description of Dataset
 The dataset consists of two CSV files: InjectionMoldingData_Train.csv, which contains all training samples, and InjectionMoldingData_Test.csv, which contains all test samples. Both files contain 9 columns:
@@ -86,11 +92,72 @@ if __name__ == '__main__':
 
 ## 1. Correlation between variables
 For the correlation between variables, i decided to use the pandas correlation function
+
 ```
-corr = training_data.corr()
-    print(corr)
-    f = plt.figure(figsize=(8, 8))
-    plt.matshow(corr, fignum=f.number)
-    plt.title('Correlation Matrix')
+def correlate_data(data):
+    corr = data.corr()
+    return corr
+
+
+def plot_correlation_matrix(correlation_data):
+    plt.figure(figsize=(8, 8))
+    plt.imshow(correlation_data, interpolation='none', aspect='auto')
+    plt.title('Correlation Matrix', fontsize=18)
+    plt.colorbar()
     plt.show()
+
+
+# Reduce the redundant pairs and the correlation from a predictor with itself
+def get_redundant_pairs(data):
+    pairs_to_drop = set()
+    cols = data.columns
+    for i in range(0, data.shape[1]):
+        for j in range(0, i+1):
+            pairs_to_drop.add((cols[i], cols[j]))
+    return pairs_to_drop
+
+
+# Get the top five correlations between predictors, redundancy excluded
+def get_top_abs_correlations(data, n=5):
+    au_corr = data.corr().abs().unstack()
+    labels_to_drop = get_redundant_pairs(data)
+    au_corr = au_corr.drop(labels=labels_to_drop).sort_values(ascending=False)
+    return au_corr[0:n]
 ```
+
+And in the main() function, add:
+
+```
+correlation_data = correlate_data(training_data)
+print(get_top_abs_correlations(correlation_data))
+plot_correlation_matrix(correlation_data)
+```
+The results are a listing of the top five correlations and a plot of the correlation matrix.
+```
+PowTotAct_Min      Inj1PosVolAct_Var           0.995158
+                   OilTmp1Act_1stPCscore       0.964045
+Inj1PosVolAct_Var  OilTmp1Act_1stPCscore       0.944855
+                   Inj1HopTmpAct_1stPCscore    0.906364
+PowTotAct_Min      Inj1HopTmpAct_1stPCscore    0.870516
+dtype: float64 
+```
+
+![Plot](./media/myplot.png)
+
+*Figure 3: Plotted Correlation Matrix*
+
+We have multiple pairs that correlate with more than 0.9: 
+```
+PowTotAct_Min      Inj1PosVolAct_Var           0.995158
+                   OilTmp1Act_1stPCscore       0.964045
+Inj1PosVolAct_Var  OilTmp1Act_1stPCscore       0.944855
+                   Inj1HopTmpAct_1stPCscore    0.906364
+```
+
+Total power consumption of the machine (PowTotAct_Min) correlates with
+Position of the screw (Inj1PosVolAct_Var) and Oil temperature (OilTmp1Act_1stPCscore)
+
+The Position of the screw (Inj1PosVolAct_Var) also correlates with the Oil temperature (OilTmp1Act_1stPCscore) and with the 
+Temperature of the flange (Inj1HopTmpAct_1stPCscore)
+
+## 2. Which predictor to choose?
