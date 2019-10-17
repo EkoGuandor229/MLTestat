@@ -5,6 +5,10 @@ The goal of this assignment is to apply your knowledge about linear regression t
 task for the next two weeks will be to analyze the given data using the techniques we have learned up to
 now.
 
+![XKCD](./media/XKCD.png)
+
+*Figure 0: Machine Learning explained by xkcd.com*
+
 Injection molding (Spritzgiessen) is a highly complex process. Environmental conditions, varying characteristics of the input materials, and internal machine parameters and conditions have a direct impact on the
 produced components. Often the machine operator has to tune machine settings for each new part in order
 to achieve an optimal performance and quality. The institutes ICOM and IWK are currently working on a
@@ -157,7 +161,110 @@ Inj1PosVolAct_Var  OilTmp1Act_1stPCscore       0.944855
 Total power consumption of the machine (PowTotAct_Min) correlates with
 Position of the screw (Inj1PosVolAct_Var) and Oil temperature (OilTmp1Act_1stPCscore)
 
-The Position of the screw (Inj1PosVolAct_Var) also correlates with the Oil temperature (OilTmp1Act_1stPCscore) and with the 
-Temperature of the flange (Inj1HopTmpAct_1stPCscore)
+The Position of the screw (Inj1PosVolAct_Var) also correlates with the Oil temperature (OilTmp1Act_1stPCscore) 
+and with the Temperature of the flange (Inj1HopTmpAct_1stPCscore)
 
 ## 2. Which predictor to choose?
+For this part of the assignment, i used the statsmodels.formula.api module to directly print a result set with
+ all relevant information. the method works as follows:
+```
+def statsmodel_regression(training_data, formula: str):
+    model = sm.ols(formula, training_data)
+    result = model.fit()
+    parameters = result.summary()
+    return parameters
+```
+in the main() i add the following lines
+```
+formula = "mass ~ PowTotAct_Min " \
+              "+ Inj1PosVolAct_Var" \
+              "+ Inj1PrsAct_meanOfInjPhase" \
+              "+ Inj1HopTmpAct_1stPCscore" \
+              "+ Inj1HtgEd3Act_1stPCscore" \
+              "+ ClpFceAct_1stPCscore" \
+              "+ ClpPosAct_1stPCscore" \
+              "+ OilTmp1Act_1stPCscore"
+    parameters = statsmodel_regression(training_data, formula)
+    print(parameters)
+```
+The resulting table shows all relevant data to choose the most significant predictor.
+```
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                   mass   R-squared:                       0.987
+Model:                            OLS   Adj. R-squared:                  0.986
+Method:                 Least Squares   F-statistic:                     1312.
+Date:                Thu, 17 Oct 2019   Prob (F-statistic):          2.55e-128
+Time:                        17:55:09   Log-Likelihood:                 459.93
+No. Observations:                 150   AIC:                            -901.9
+Df Residuals:                     141   BIC:                            -874.8
+Df Model:                           8                                         
+Covariance Type:            nonrobust                                         
+=============================================================================================
+                                coef    std err          t      P>|t|      [0.025      0.975]
+---------------------------------------------------------------------------------------------
+Intercept                    30.3054      0.356     85.160      0.000      29.602      31.009
+PowTotAct_Min              8.399e-07   1.06e-06      0.789      0.431   -1.26e-06    2.94e-06
+Inj1PosVolAct_Var             0.0052      0.001      6.772      0.000       0.004       0.007
+Inj1PrsAct_meanOfInjPhase     0.0044      0.001      7.827      0.000       0.003       0.006
+Inj1HopTmpAct_1stPCscore     -0.0001      0.000     -0.309      0.758      -0.001       0.001
+Inj1HtgEd3Act_1stPCscore      0.0005   4.74e-05     10.508      0.000       0.000       0.001
+ClpFceAct_1stPCscore         -0.0004   4.19e-05     -9.012      0.000      -0.000      -0.000
+ClpPosAct_1stPCscore         -0.0002      0.000     -1.162      0.247      -0.001       0.000
+OilTmp1Act_1stPCscore         0.0014      0.000     10.888      0.000       0.001       0.002
+```
+The R-Squared value shows, that the model explains a large portion of the variance in the response variable.
+The P>|t| values show significance for the model and in general a value lower than 0.005 is preferable.
+
+This means, that the position of the screw (Inj1PosVolAct_Var), the melt pressure of the screw 
+(Inj1PrsAct_meanOfInjPhase), the cilinder heating (Inj1HtgEd3Act_1stPCscore), 
+the clamp force (ClpFceAct_1stPCscore) and the oil temperature (OilTmp1Act_1stPCscore) are all
+viable predictors for the response. 
+
+Since the position of the screw and the oil temperature correlate with other predictors, i discard 
+them as predictors. I decided to choose the melt pressure of the screw, since it has a higher coefficient
+than the other two, meaning, that if i change it by one unit, in average the response changes more, provided
+everything else is constant.
+
+## 3. Model with only relevant predictors
+For this model, i reuse the statsmodel_regression method with a backward selection process, meaning that in every
+iteration i remove the predictor with the highest value and check, if the R-squared and standard error of the 
+coefficient gets better.
+```
+ # 3. Reduction to relevant predictors
+    formula = "mass ~ PowTotAct_Min " \
+              "+ Inj1PosVolAct_Var" \
+              "+ Inj1PrsAct_meanOfInjPhase" \
+              "+ Inj1HtgEd3Act_1stPCscore" \
+              "+ ClpFceAct_1stPCscore" \
+              "+ ClpPosAct_1stPCscore" \
+              "+ OilTmp1Act_1stPCscore"
+    parameters = statsmodel_regression(training_data, formula)
+    print(parameters)
+    # exclusion of the Inj1HopTmpAct_1stPCscore leads to a .003  better std err of the intercept
+
+    formula = "mass ~  Inj1PosVolAct_Var" \
+              "+ Inj1PrsAct_meanOfInjPhase" \
+              "+ Inj1HtgEd3Act_1stPCscore" \
+              "+ ClpFceAct_1stPCscore" \
+              "+ ClpPosAct_1stPCscore" \
+              "+ OilTmp1Act_1stPCscore"
+    parameters = statsmodel_regression(training_data, formula)
+    print(parameters)
+    # exclusion of PowTotAct_Min has no real impact on the std error
+
+    formula = "mass ~  Inj1PosVolAct_Var" \
+              "+ Inj1PrsAct_meanOfInjPhase" \
+              "+ Inj1HtgEd3Act_1stPCscore" \
+              "+ ClpFceAct_1stPCscore" \
+              "+ OilTmp1Act_1stPCscore"
+    parameters = statsmodel_regression(training_data, formula)
+    print(parameters)
+    # exclusion of ClpPosAct_1stPCscore reduces the std error by .001
+```
+For testing, i excluded all variables each in a separate iteration to check, if there is some significant 
+change. The exclusion of the Inj1PosVolAct_Var reduced the standard error of 
+the coefficient by .285
+
+## 4. Let the tests roll in 
+Now its time to evaluate the system with the test-data
