@@ -60,19 +60,6 @@ MSE. How does your model perform on the test data?
 5. Add higher-order terms, such as quadratic terms or interaction terms to improve the model. Judge the
 model quality (R2 values). Again, compare the training MSE to the test MSE.
 
-## Conditions
-1. The next two weeks (week 5 and 6 of the semester), you independently work on this assignment.
-Attendance is not required for these two weeks. The lab 6.004 is available to you at the normal hours,
-if you need a computer with Python, Matlab, and RStudio installed, or if you need any help with the
-assignment.
-2. You write a short report which answers the questions above and summarizes your findings. The report
-should be 1 – 2 pages A4 and written in German or English.
-3. The report is due on Friday, 25 October 2019 at 17:00. Please also hand in all code written for this
-assignment. The report in PDF form and all code have to be sent to sjecklin@hsr.ch. Add the subject
-(Betreff) ML-Assignment to the email.
-4. Everybody hands in their own report. Collaboration and discussion between students, however, is
-allowed and encouraged.
-
 # Report
 ## Setup
 First, we prepare the program to read in the training data and the test data. I used panda for this
@@ -165,7 +152,7 @@ and with the cylinder heating (Inj1HtgEd3Act_1stPCscore)
 
 ## 2. Which predictor to choose?
 For this part of the assignment, i used the statsmodels.formula.api module to directly print a result set with
-all relevant information. the method works as follows:
+all relevant information. the code looks as follows:
 ```
 def statsmodel_regression(training_data, formula: str):
     model = sm.ols(formula, training_data)
@@ -186,7 +173,7 @@ formula = "mass ~ PowTotAct_Min " \
     parameters = statsmodel_regression(training_data, formula)
     print(parameters)
 ```
-The resulting table shows all relevant data to choose the most significant predictor.
+The resulting table shows a lot of data. 
 ```
                              OLS Regression Results                            
 ==============================================================================
@@ -219,14 +206,15 @@ Kurtosis:                       5.064   Cond. No.                     3.56e+05
 ==============================================================================
 ```
 The R-Squared value shows, that the model explains a large portion of the variance in the response variable.
-The P>|t| values show significance for the model and in general a value lower than 0.005 is preferable.
+The P>|t| values show significance of the predictor for the model and in general a value lower than 0.005 is preferable.
 
 This means, that the position of the screw (Inj1PosVolAct_Var), the melt pressure of the screw 
 (Inj1PrsAct_meanOfInjPhase), the cilinder heating (Inj1HtgEd3Act_1stPCscore), 
 the clamp force (ClpFceAct_1stPCscore) and the oil temperature (OilTmp1Act_1stPCscore) are all
 viable predictors for the response. 
 
-To be able to choose the predictor with the highest R squared combined with a p-value smaller than 0,005
+To be able to choose the predictor with the highest R squared combined with a p-value smaller than 0,005, i add the 
+following lines of code to the main() function
 ```
 
     formula = "mass ~ Inj1PosVolAct_Var"
@@ -249,7 +237,7 @@ To be able to choose the predictor with the highest R squared combined with a p-
     parameters = statsmodel_regression(training_data, formula)
     print(parameters)
 ```
-Results:
+This results in the following output:
 ```
 Parameters of position of the screw
 0.80049082498907 1.1506184460940665e-53
@@ -267,10 +255,10 @@ Parameters of the oil temperature
 0.0021638722385983744 0.5718968468560208
 ```
 The melt pressure on the screw (Inj1PrsAct_meanOfInjPhase) has a R-squared of 0.810 and has a high correlation
-with the mass, so i choose this predictor 
+with the mass, so i choose this predictor. 
 
 ## 3. Model with only relevant predictors
-For this model, i reuse the statsmodel_regression method with a forward selection process, meaning that in every
+For this model, i add the following lines of code. I went with with a forward selection process, meaning that in every
 iteration i add a predictor with the lowes p-value and check, if the R-squared value gets better.
 ```
  print("Add posistion of the screw to melt pressure")
@@ -343,9 +331,19 @@ Inj1HtgEd3Act_1stPCscore      1.831581e-20
 OilTmp1Act_1stPCscore         2.144593e-22
 dtype: float64
 ```
+As one can see, the first number, which is the R-squared value for the model, increases with each addition of 
+a predictor. Also, the p-value never crosses the 0.005 line which would show a bad iteration step.
 
 ## 4. Let the tests roll in 
-Now its time to evaluate the system with the test-data. Code:
+Now its time to evaluate the chosen model with the test-data. Reminder:
+
+Formula = "mass ~ Inj1PrsAct_meanOfInjPhase" \
+              "+ Inj1PosVolAct_Var" \
+              "+ ClpFceAct_1stPCscore" \
+              "+ Inj1HtgEd3Act_1stPCscore" \
+              "+ OilTmp1Act_1stPCscore"
+              
+The mean square error is calculated as shown in the following lines of code.
 ```
 # Training data Mean Squared Errors
     model = sm.ols(formula, training_data).fit()
@@ -364,12 +362,20 @@ Resulting MSE's:
 Training-MSE: 0.00012927825694237846
 Test-MSE: 0.00017884062549372874
 ```
+Both the training and test mse's are quite low which means that on average, he predicted mass deviates from 
+ the actual mass by about 0.00018g. This is less than 0.001% deviation.
+  
 ## 5. Higher order terms
-Assumption: Melt pressure interacts with other predictors
-Tests:
+Assumption: Melt pressure interacts with other predictors.
+
+So i test the model with the following four formulas:
+
 mass ~ I(Inj1PrsAct_meanOfInjPhase **2) + Inj1PosVolAct_Var
+
 mass ~ I(Inj1PrsAct_meanOfInjPhase **2) + Inj1HtgEd3Act_1stPCscore
+
 mass ~ I(Inj1PrsAct_meanOfInjPhase **2) + ClpFceAct_1stPCscore
+
 mass ~ I(Inj1PrsAct_meanOfInjPhase **2) + OilTmp1Act_1stPCscore
 Code:
 ```
@@ -436,4 +442,5 @@ Test-MSE: 0.000246656257047295
 ```
 In all of the tested formulas, the R-squared is worse than the model shown and tested in section 3 and 4.
 The only noteworthy formula is {mass ~ I(Inj1PrsAct_meanOfInjPhase **2) + OilTmp1Act_1stPCscore} for which the 
-R-squared is 0.962 and the MSE is 0.000247 which is remotely as good as the chosen model.
+R-squared is 0.962 and the MSE is 0.000247 which is remotely as good as the chosen model but still not good enough
+to be considered as the new model.
