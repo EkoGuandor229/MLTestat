@@ -310,20 +310,23 @@ iteration i add a predictor with the lowes p-value and check, if the R-squared v
 This procedure results in:
 ```
 Add posistion of the screw to melt pressure
-0.8366357970346275 Intercept                    2.138112e-58
+0.8366357970346275 
+Intercept                    2.138112e-58
 Inj1PrsAct_meanOfInjPhase    6.251028e-08
 Inj1PosVolAct_Var            2.401760e-06
 dtype: float64
 
 Add clamp force
-0.9575214769385876 Intercept                    1.155154e-100
+0.9575214769385876 
+Intercept                    1.155154e-100
 Inj1PrsAct_meanOfInjPhase     1.317330e-22
 Inj1PosVolAct_Var             1.088053e-03
 ClpFceAct_1stPCscore          1.511120e-44
 dtype: float64
 
 Add oil cylinder heating
-0.9739211118731628 Intercept                    4.196558e-114
+0.9739211118731628 
+Intercept                    4.196558e-114
 Inj1PrsAct_meanOfInjPhase     2.951911e-02
 Inj1PosVolAct_Var             1.317246e-02
 ClpFceAct_1stPCscore          4.077625e-49
@@ -331,7 +334,8 @@ Inj1HtgEd3Act_1stPCscore      4.584282e-17
 dtype: float64
 
 Add oil temperature
-0.9865244378155531 Intercept                    9.643363e-126
+0.9865244378155531 
+Intercept                    9.643363e-126
 Inj1PrsAct_meanOfInjPhase     2.753278e-14
 Inj1PosVolAct_Var             7.404307e-11
 ClpFceAct_1stPCscore          4.420079e-16
