@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import statsmodels.formula.api as sm
+import numpy as np
 from statsmodels.tools.eval_measures import mse
 
 
@@ -23,11 +24,14 @@ def main():
     # y = training_data.mass
 
     # 1. Correlation
+    print("Correlation")
     correlation_data = correlate_data(training_data)
     print(get_top_abs_correlations(correlation_data))
     plot_correlation_matrix(correlation_data)
+    print("")
 
     # 2. Singular Predictor choice
+    print("Analysis of the whole system")
     formula = "mass ~ PowTotAct_Min " \
               "+ Inj1PosVolAct_Var" \
               "+ Inj1PrsAct_meanOfInjPhase" \
@@ -36,70 +40,122 @@ def main():
               "+ ClpFceAct_1stPCscore" \
               "+ ClpPosAct_1stPCscore" \
               "+ OilTmp1Act_1stPCscore"
-    parameters = statsmodel_regression(training_data, formula)
-    print(parameters)
+    model = sm.ols(formula, training_data).fit()
+    print(model.summary())
+    print("")
+    # in the list, we see that there are five different predictors with a p-value lower than 0.005
+    # The next step is to print the list for each predictor so that mass = predictor
+
+    print("Parameters of position of the screw")
+    formula = "mass ~ Inj1PosVolAct_Var"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues[1]))
+    print("")
+
+    print("Parameters of melt pressure of the screw")
+    formula = "mass ~ Inj1PrsAct_meanOfInjPhase"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues[1]))
+    print("")
+
+    print("Parameters of Cylinder heating")
+    formula = "mass ~ Inj1HtgEd3Act_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues[1]))
+    print("")
+
+    print("Parameters of clamp force")
+    formula = "mass ~ ClpFceAct_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues[1]))
+    print("")
+
+    print("Parameters of the oil temperature")
+    formula = "mass ~ OilTmp1Act_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues[1]))
+    print("")
 
     # 3. Reduction to relevant predictors
-    formula = "mass ~ PowTotAct_Min " \
-              "+ Inj1PosVolAct_Var" \
-              "+ Inj1PrsAct_meanOfInjPhase" \
-              "+ Inj1HtgEd3Act_1stPCscore" \
-              "+ ClpFceAct_1stPCscore" \
-              "+ ClpPosAct_1stPCscore" \
-              "+ OilTmp1Act_1stPCscore"
-    parameters = statsmodel_regression(training_data, formula)
-    print(parameters)
-    # exclusion of the Inj1HopTmpAct_1stPCscore leads to a .003  better std err of the intercept
-
-    formula = "mass ~  Inj1PosVolAct_Var" \
-              "+ Inj1PrsAct_meanOfInjPhase" \
-              "+ Inj1HtgEd3Act_1stPCscore" \
-              "+ ClpFceAct_1stPCscore" \
-              "+ ClpPosAct_1stPCscore" \
-              "+ OilTmp1Act_1stPCscore"
-    parameters = statsmodel_regression(training_data, formula)
-    print(parameters)
-    # exclusion of PowTotAct_Min has no real impact on the std error
-
-    formula = "mass ~  Inj1PosVolAct_Var" \
-              "+ Inj1PrsAct_meanOfInjPhase" \
-              "+ Inj1HtgEd3Act_1stPCscore" \
-              "+ ClpFceAct_1stPCscore" \
-              "+ OilTmp1Act_1stPCscore"
-    parameters = statsmodel_regression(training_data, formula)
-    print(parameters)
-    # exclusion of ClpPosAct_1stPCscore reduces the std error by .001
-
-    formula = "mass ~  " \
-              "+ Inj1PrsAct_meanOfInjPhase" \
-              "+ Inj1HtgEd3Act_1stPCscore" \
-              "+ ClpFceAct_1stPCscore" \
-              "+ OilTmp1Act_1stPCscore"
-    parameters = statsmodel_regression(training_data, formula)
-    print(parameters)
-    # exclusion of Inj1PosVolAct_Var reduces the std error by .285!
-
-    # 4. Test the model
+    print("Add posistion of the screw to melt pressure")
     formula = "mass ~ Inj1PrsAct_meanOfInjPhase" \
-              "+ Inj1HtgEd3Act_1stPCscore" \
-              "+ ClpFceAct_1stPCscore" \
-              "+ OilTmp1Act_1stPCscore"
-    prediction = statsmodel_prediction(training_data, test_data_predictors, formula)
-    print(prediction)
-    # calculate mse's
-
-
-def statsmodel_regression(training_data, formula: str):
-    model = sm.ols(formula, training_data)
-    result = model.fit()
-    parameters = result.summary()
-    return parameters
-
-
-def statsmodel_prediction(training_data, test_data, formula: str):
+              "+ Inj1PosVolAct_Var"
     model = sm.ols(formula, training_data).fit()
-    result = model.predict(test_data)
-    return result
+    print("{} \n{}".format(model.rsquared, model.pvalues))
+    print("")
+
+    print("Add clamp force")
+    formula = "mass ~ Inj1PrsAct_meanOfInjPhase" \
+              "+ Inj1PosVolAct_Var" \
+              "+ ClpFceAct_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues))
+    print("")
+
+    print("Add oil cylinder heating")
+    formula = "mass ~ Inj1PrsAct_meanOfInjPhase" \
+              "+ Inj1PosVolAct_Var" \
+              "+ ClpFceAct_1stPCscore" \
+              "+ Inj1HtgEd3Act_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues))
+    print("")
+
+    print("Add oil temperature")
+    formula = "mass ~ Inj1PrsAct_meanOfInjPhase" \
+              "+ Inj1PosVolAct_Var" \
+              "+ ClpFceAct_1stPCscore" \
+              "+ Inj1HtgEd3Act_1stPCscore" \
+              "+ OilTmp1Act_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues))
+    print("")
+
+    # calculate mse's
+    # Training data Mean Squared Errors
+    model = sm.ols(formula, training_data).fit()
+    predictions = model.predict(training_data)
+    mean_squared_error = (np.mean(np.square(training_data.mass - predictions)))
+    print("Training-MSE: " + str(mean_squared_error))
+
+    # Test data mean squared errors
+    model = sm.ols(formula, training_data).fit()
+    predictions = model.predict(test_data_predictors)
+    mean_squared_error = np.mean(np.square(test_data_response.mass - predictions))
+    print("Test-MSE: " + str(mean_squared_error))
+    print("")
+
+    # Interaction terms
+    formula = "mass ~ I(Inj1PrsAct_meanOfInjPhase ** 2) + Inj1PosVolAct_Var"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues))
+    predictions = model.predict(test_data_predictors)
+    mean_squared_error = np.mean(np.square(test_data_response.mass - predictions))
+    print("Test-MSE: " + str(mean_squared_error))
+    print("")
+
+    formula = "mass ~ I(Inj1PrsAct_meanOfInjPhase ** 2) + Inj1HtgEd3Act_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues))
+    predictions = model.predict(test_data_predictors)
+    mean_squared_error = np.mean(np.square(test_data_response.mass - predictions))
+    print("Test-MSE: " + str(mean_squared_error))
+    print("")
+
+    formula = "mass ~ I(Inj1PrsAct_meanOfInjPhase ** 2) + ClpFceAct_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues))
+    predictions = model.predict(test_data_predictors)
+    mean_squared_error = np.mean(np.square(test_data_response.mass - predictions))
+    print("Test-MSE: " + str(mean_squared_error))
+    print("")
+
+    formula = "mass ~ I(Inj1PrsAct_meanOfInjPhase ** 2) + OilTmp1Act_1stPCscore"
+    model = sm.ols(formula, training_data).fit()
+    print("{} \n{}".format(model.rsquared, model.pvalues))
+    predictions = model.predict(test_data_predictors)
+    mean_squared_error = np.mean(np.square(test_data_response.mass - predictions))
+    print("Test-MSE: " + str(mean_squared_error))
 
 
 def correlate_data(data):
